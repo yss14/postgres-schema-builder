@@ -1,6 +1,6 @@
 {
 	"name": "postgres-schema-builder",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "Simple postgres schema builder leveraging Typescript's type system to enable typesafe queries",
 	"keywords": [
 		"postgres",
