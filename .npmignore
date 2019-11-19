@@ -9,3 +9,4 @@ tsconfig.json
 *.env
 .eslintrc.js
 build/__test__/
+!build/__test__/utils/make-test-database.*
