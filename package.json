@@ -36,7 +36,7 @@
 		"url": "https://github.com/yss14/postgres-schema-builder/issues"
 	},
 	"dependencies": {
-		"@types/pg": "^7.4.14",
+		"@types/pg": "^7.11.2",
 		"@types/pg-escape": "^0.2.0",
 		"moment": "^2.24.0",
 		"pg": "^7.12.1",
