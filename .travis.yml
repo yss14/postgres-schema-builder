@@ -1,0 +1,31 @@
+dist: trusty
+
+services:
+  - postgresql
+
+language: node_js
+node_js:
+  - "13"
+  - "12"
+  - "11"
+  - "10"
+  - "9"
+  - "8"
+  - "7"
+
+cache: npm
+
+addons:
+  postgresql: "9.6"
+
+install:  
+  - npm install
+
+jobs:
+  include:
+    - stage: Build and Test
+      script:
+        - npm run build
+        - npm run verify
+        - npm run lint
+        - npm run test:ci

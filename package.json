@@ -1,0 +1,61 @@
+{
+	"name": "postgres-schema-builder",
+	"version": "1.0.2",
+	"description": "Simple postgres schema builder leveraging Typescript's type system to enable typesafe queries",
+	"keywords": [
+		"postgres",
+		"postgresql",
+		"typescript",
+		"typesafe",
+		"schema",
+		"query",
+		"builder",
+		"database"
+	],
+	"author": "Yannick Stachelscheid <stachelscheid@musicshare.rocks>",
+	"homepage": "https://github.com/yss14/",
+	"license": "MIT",
+	"main": "build/index",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yss14/postgres-schema-builder"
+	},
+	"scripts": {
+		"dev": "npm run build:watch",
+		"build": "tsc",
+		"build:watch": "tsc --watch --preserveWatchOutput",
+		"verify": "tsc --noEmit",
+		"test": "jest --config=jest.json --detectOpenHandles --colors",
+		"test:watch": "jest --watch --config=jest.json --detectOpenHandles --colors",
+		"test:cov": "jest --config=jest.json --collectCoverage --detectOpenHandles --colors --forceExit",
+		"test:ci": "npm run test:cov && codecov",
+		"lint": "eslint ./src --ext .ts",
+		"lint:fix": "eslint ./src --ext .ts --fix"
+	},
+	"bugs": {
+		"url": "https://github.com/yss14/postgres-schema-builder/issues"
+	},
+	"dependencies": {
+		"@types/pg": "^7.4.14",
+		"@types/pg-escape": "^0.2.0",
+		"moment": "^2.24.0",
+		"pg": "^7.11.0",
+		"pg-escape": "^0.2.0"
+	},
+	"devDependencies": {
+		"@types/dotenv": "^8.2.0",
+		"@types/jest": "^24.0.23",
+		"@types/node": "^12.12.9",
+		"@types/uuid": "^3.4.4",
+		"@typescript-eslint/eslint-plugin": "^2.8.0",
+		"@typescript-eslint/parser": "^2.8.0",
+		"codecov": "^3.6.1",
+		"dotenv": "^8.2.0",
+		"eslint": "^6.6.0",
+		"jest": "^24.9.0",
+		"jest-extended": "^0.11.2",
+		"ts-jest": "^24.1.0",
+		"typescript": "^3.7.2",
+		"uuid": "^3.3.2"
+	}
+}

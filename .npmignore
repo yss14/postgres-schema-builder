@@ -1,0 +1,11 @@
+src
+build
+coverage
+node_modules
+.gitignore
+.travis.yml
+jest.json
+tsconfig.json
+*.env
+.eslintrc.js
+build/__test__/
