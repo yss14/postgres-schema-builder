@@ -157,7 +157,7 @@ await database.transaction(async (client) => {
 * Improve and extend docs
 * Allow `insert` and `insertFromObj` returning the inserted data
 * Enable client to perform multiple queries
-* Introduce database management object enabling schema versioning with migrations
+* Introduce database management object enabling schema versioning with migrations (try out [v1.1.0-beta.0](https://github.com/yss14/postgres-schema-builder/releases/tag/v1.1.0-beta.0))
 * Extend test cases and improve code coverage
 
 ## Support
