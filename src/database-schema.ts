@@ -52,7 +52,7 @@ export const DatabaseSchema = ({ client, createStatements, name, migrations, log
 
             if (versionDBResults.length === 0) {
                 await transaction.query({
-                    sql: createStatements.join('\n')
+                    sql: createStatements.join('\n'),
                 })
                 await transaction.query(insertSchemaQuery(name, 1))
 

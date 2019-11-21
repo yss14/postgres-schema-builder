@@ -92,7 +92,7 @@ describe('migrate latest', () => {
                     targetColumn: 'id',
                     onDelete: ForeignKeyUpdateDeleteRule.Cascade,
                     onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
-                }]
+                }],
             },
             some_new_fk_same_target: {
                 type: ColumnType.Integer, nullable: false, createIndex: true, foreignKeys: [{
@@ -100,8 +100,8 @@ describe('migrate latest', () => {
                     targetColumn: 'id',
                     onDelete: ForeignKeyUpdateDeleteRule.Cascade,
                     onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
-                }]
-            }
+                }],
+            },
         }
         migrations.set(3, Migration(async (transaction) => {
             await transaction.query(SQL.raw(SQL.dropColumns(TestTableA.name, columnsToBeRemoved)))

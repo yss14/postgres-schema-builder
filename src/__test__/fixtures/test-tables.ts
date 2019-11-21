@@ -35,7 +35,7 @@ export const TestTableAllTypesV2 = Table({
 				targetColumn: 'id',
 				onDelete: ForeignKeyUpdateDeleteRule.Cascade,
 				onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
-			}]
+			}],
 		},
 		some_new_fk_same_target: {
 			type: ColumnType.Integer, nullable: false, createIndex: true, foreignKeys: [{
@@ -43,7 +43,7 @@ export const TestTableAllTypesV2 = Table({
 				targetColumn: 'id',
 				onDelete: ForeignKeyUpdateDeleteRule.Cascade,
 				onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
-			}]
-		}
-	})
+			}],
+		},
+	}),
 }, 'test_table_all_types')

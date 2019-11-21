@@ -227,6 +227,6 @@ export const Table =
 				return {
 					sql: SQL.dropColumns(table, columndObject),
 				}
-			}
+			},
 		}
 	}
