@@ -1,8 +1,8 @@
 import { makeTestDatabase, makeMockDatabase } from "./utils/make-test-database";
-import { TestTables, TestTableA, TestTableB } from "./fixtures/test-tables";
+import { TestTables, TestTableA, TestTableB, TestTableAllTypes } from "./fixtures/test-tables";
 import { DatabaseSchema, IMigration, Migration, IDatabaseSchemaArgs } from "../database-schema";
 import { composeCreateTableStatements } from "../sql-utils";
-import { ColumnType } from "../table";
+import { ColumnType, ForeignKeyUpdateDeleteRule } from "../table";
 import { SQL } from "../sql";
 
 const cleanupHooks: (() => Promise<void>)[] = [];
@@ -87,6 +87,24 @@ describe('migrate latest', () => {
         const columnsToBeRemoved = ['some_newly_added_col_string', 'some_str']
         migrations.set(3, Migration(async (transaction) => {
             await transaction.query(TestTableA.dropColumns(columnsToBeRemoved))
+            await transaction.query(TestTableAllTypes.addColumns({
+                some_new_fk: {
+                    type: ColumnType.Integer, nullable: false, createIndex: true, foreignKeys: [{
+                        targetTable: TestTableA.name,
+                        targetColumn: 'id',
+                        onDelete: ForeignKeyUpdateDeleteRule.Cascade,
+                        onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
+                    }]
+                },
+                some_new_fk_same_target: {
+                    type: ColumnType.Integer, nullable: false, createIndex: true, foreignKeys: [{
+                        targetTable: TestTableA.name,
+                        targetColumn: 'id',
+                        onDelete: ForeignKeyUpdateDeleteRule.Cascade,
+                        onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
+                    }]
+                }
+            }))
         }))
 
         const databaseSchema = DatabaseSchema({

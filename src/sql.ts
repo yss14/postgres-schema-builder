@@ -53,14 +53,22 @@ export namespace SQL {
 
 	export const addColumns = (tableName: string, columns: Columns): string => {
 		const entries = Object.entries(columns).map(([name, column]) => ({ name, ...column }));
-		// const foreignKeyConstraints: IReferenceConstraintInternal[] = collectForeignKeyConstraints(entries);
+		const foreignKeyConstraints: IReferenceConstraintInternal[] = collectForeignKeyConstraints(entries);
+
+		const addForeignKeyConstraintsStatements = `
+			${prepareForeignKeyConstraintStatements(tableName, foreignKeyConstraints)
+				.map(constraint => `ALTER TABLE ${tableName} ADD CONSTRAINT ${constraint}`).join(';\n')}
+		`
 
 		const addTableColumnStatement = `
 			ALTER TABLE ${tableName}
 			${entries.map(entry => `ADD COLUMN ${prepareCreateColumnStatement(entry)}`).join(',\n')};
 		`
 
-		return addTableColumnStatement
+		return `
+			${addTableColumnStatement}
+			${addForeignKeyConstraintsStatements}
+		`
 	}
 
 	export const dropColumns = (tableName: string, columns: string[]): string => {
