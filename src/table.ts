@@ -152,6 +152,8 @@ export interface ITable<C extends Columns> {
 		(conditions: ColumnValues<C, Where>) => IQuery<Pick<C, Extract<Subset[number], string>>>;
 	drop(): IQuery<{}>;
 	delete<Where extends Keys<C>>(where: Where): (conditions: ColumnValues<C, Where>) => IQuery<{}>;
+	addColumns(columns: Columns): IQuery<{}>;
+	dropColumns<Subset extends Keys<C>>(columns: Subset): IQuery<{}>;
 }
 
 export const Table =
@@ -210,6 +212,21 @@ export const Table =
 					sql,
 					values,
 				})
+			},
+			addColumns: (columns) => ({
+				sql: SQL.addColumns(table, columns),
+			}),
+			dropColumns: (columnsToRemove) => {
+				const columnNames = columnsToRemove.filter(isString)
+				const columndObject: Columns = columnNames.reduce((obj, columnName) => {
+					const columnDefinition = columns[columnName]
+
+					return { ...obj, [columnName]: columnDefinition }
+				}, {})
+
+				return {
+					sql: SQL.dropColumns(table, columndObject),
+				}
 			},
 		}
 	}

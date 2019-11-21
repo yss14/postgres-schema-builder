@@ -25,3 +25,25 @@ export namespace TestTables {
 export const TestTableA = Table(TestTables, 'test_table_a');
 export const TestTableB = Table(TestTables, 'test_table_b');
 export const TestTableAllTypes = Table(TestTables, 'test_table_all_types');
+
+export const TestTableAllTypesV2 = Table({
+	test_table_all_types: TableSchema({
+		...TestTables.test_table_all_types,
+		some_new_fk: {
+			type: ColumnType.Integer, nullable: false, createIndex: true, foreignKeys: [{
+				targetTable: TestTableA.name,
+				targetColumn: 'id',
+				onDelete: ForeignKeyUpdateDeleteRule.Cascade,
+				onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
+			}],
+		},
+		some_new_fk_same_target: {
+			type: ColumnType.Integer, nullable: false, createIndex: true, foreignKeys: [{
+				targetTable: TestTableA.name,
+				targetColumn: 'id',
+				onDelete: ForeignKeyUpdateDeleteRule.Cascade,
+				onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
+			}],
+		},
+	}),
+}, 'test_table_all_types')

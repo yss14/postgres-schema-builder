@@ -4,6 +4,8 @@ import { dateToSQLUTCFormat } from "./sql-utils";
 import moment from 'moment'
 import { flatten } from './utils'
 
+const isStringArray = (arr: any): arr is string[] => Array.isArray(arr) && arr.every(item => typeof item === 'string')
+
 export namespace SQL {
 	export const createDatabase = (name: string) => `CREATE DATABASE ${name};`;
 
@@ -49,6 +51,61 @@ export namespace SQL {
 			${createTableQuery}
 			${createIndexQueries.join('\n')}
 		`;
+	}
+
+	export const addColumns = (tableName: string, columns: Columns): string => {
+		const entries = Object.entries(columns).map(([name, column]) => ({ name, ...column }));
+		const foreignKeyConstraints: IReferenceConstraintInternal[] = collectForeignKeyConstraints(entries);
+
+		const addForeignKeyConstraintsStatements = `
+			${prepareForeignKeyConstraintStatements(tableName, foreignKeyConstraints)
+				.map(constraint => `ALTER TABLE ${tableName} ADD CONSTRAINT ${constraint}`).join(';\n')}
+		`
+
+		const addTableColumnStatement = `
+			ALTER TABLE ${tableName}
+			${entries.map(entry => `ADD COLUMN ${prepareCreateColumnStatement(entry)}`).join(',\n')};
+		`
+
+		return `
+			${addTableColumnStatement}
+			${addForeignKeyConstraintsStatements}
+		`
+	}
+
+	type DropColumns = {
+		(tableName: string, columns: Columns): string;
+		(tableName: string, columns: string[], constraints?: string[]): string;
+	}
+
+	export const dropColumns: DropColumns = (tableName: string, columns: Columns | string[], constraints?: string[]): string => {
+		const columnNames = isStringArray(columns)
+			? columns
+			: Object.keys(columns)
+		let constraintNames: string[] = []
+
+		if (constraints && constraints.length > 0) {
+			constraintNames = constraints
+		} else if (!isStringArray(columns)) {
+			const entries = Object.entries(columns).map(([name, column]) => ({ name, ...column }));
+			const foreignKeyConstraints = collectForeignKeyConstraints(entries)
+
+			constraintNames = foreignKeyConstraints.map(fkc => `${tableName}_${fkc.column}_fkey`)
+		}
+
+		const dropTableColumnsStatement = `
+			ALTER TABLE ${tableName}
+			${columnNames.map(column => `DROP COLUMN ${column}`).join(',\n')};
+		`
+
+		const dropConstraintsStatement = constraintNames
+			.map(constraint => `ALTER TABLE ${tableName} DROP CONSTRAINT ${constraint};`)
+			.join('\n')
+
+		return `
+			${dropConstraintsStatement}
+			${dropTableColumnsStatement}
+		`
 	}
 
 	export const insert = (tableName: string, subset: string[]) => {
