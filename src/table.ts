@@ -138,7 +138,6 @@ export const Query = (sql: string, values?: unknown[]): IQuery<{}> => ({ sql, va
 
 type NonEmpty<Type> = [Type, ...Type[]];
 export type Keys<C extends Columns> = (keyof C)[] & (NonEmpty<keyof C> | []);
-type Key<C extends Columns> = (keyof C) & NonEmpty<keyof C>;
 
 export interface ITable<C extends Columns> {
 	readonly name: string;
@@ -154,7 +153,7 @@ export interface ITable<C extends Columns> {
 	drop(): IQuery<{}>;
 	delete<Where extends Keys<C>>(where: Where): (conditions: ColumnValues<C, Where>) => IQuery<{}>;
 	addColumns(columns: Columns): IQuery<{}>;
-	dropColumns<Subset extends Key<C>>(columns: (Subset | string)[]): IQuery<{}>;
+	dropColumns<Subset extends Keys<C>>(columns: Subset): IQuery<{}>;
 }
 
 export const Table =
@@ -217,8 +216,17 @@ export const Table =
 			addColumns: (columns) => ({
 				sql: SQL.addColumns(table, columns),
 			}),
-			dropColumns: (columns) => ({
-				sql: SQL.dropColumns(table, columns.filter(isString)),
-			})
+			dropColumns: (columnsToRemove) => {
+				const columnNames = columnsToRemove.filter(isString)
+				const columndObject: Columns = columnNames.reduce((obj, columnName) => {
+					const columnDefinition = columns[columnName]
+
+					return { ...obj, [columnName]: columnDefinition }
+				}, {})
+
+				return {
+					sql: SQL.dropColumns(table, columndObject),
+				}
+			}
 		}
 	}

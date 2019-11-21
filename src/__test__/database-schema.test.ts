@@ -1,5 +1,5 @@
 import { makeTestDatabase, makeMockDatabase } from "./utils/make-test-database";
-import { TestTables, TestTableA, TestTableB, TestTableAllTypes } from "./fixtures/test-tables";
+import { TestTables, TestTableA, TestTableB, TestTableAllTypes, TestTableAllTypesV2 } from "./fixtures/test-tables";
 import { DatabaseSchema, IMigration, Migration, IDatabaseSchemaArgs } from "../database-schema";
 import { composeCreateTableStatements } from "../sql-utils";
 import { ColumnType, ForeignKeyUpdateDeleteRule } from "../table";
@@ -85,26 +85,30 @@ describe('migrate latest', () => {
             }))
         }))
         const columnsToBeRemoved = ['some_newly_added_col_string', 'some_str']
+        const newColumnsWithFKConstraints = {
+            some_new_fk: {
+                type: ColumnType.Integer, nullable: false, createIndex: true, foreignKeys: [{
+                    targetTable: TestTableA.name,
+                    targetColumn: 'id',
+                    onDelete: ForeignKeyUpdateDeleteRule.Cascade,
+                    onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
+                }]
+            },
+            some_new_fk_same_target: {
+                type: ColumnType.Integer, nullable: false, createIndex: true, foreignKeys: [{
+                    targetTable: TestTableA.name,
+                    targetColumn: 'id',
+                    onDelete: ForeignKeyUpdateDeleteRule.Cascade,
+                    onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
+                }]
+            }
+        }
         migrations.set(3, Migration(async (transaction) => {
-            await transaction.query(TestTableA.dropColumns(columnsToBeRemoved))
-            await transaction.query(TestTableAllTypes.addColumns({
-                some_new_fk: {
-                    type: ColumnType.Integer, nullable: false, createIndex: true, foreignKeys: [{
-                        targetTable: TestTableA.name,
-                        targetColumn: 'id',
-                        onDelete: ForeignKeyUpdateDeleteRule.Cascade,
-                        onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
-                    }]
-                },
-                some_new_fk_same_target: {
-                    type: ColumnType.Integer, nullable: false, createIndex: true, foreignKeys: [{
-                        targetTable: TestTableA.name,
-                        targetColumn: 'id',
-                        onDelete: ForeignKeyUpdateDeleteRule.Cascade,
-                        onUpdate: ForeignKeyUpdateDeleteRule.NoAction,
-                    }]
-                }
-            }))
+            await transaction.query(SQL.raw(SQL.dropColumns(TestTableA.name, columnsToBeRemoved)))
+            await transaction.query(TestTableAllTypes.addColumns(newColumnsWithFKConstraints))
+        }))
+        migrations.set(4, Migration(async (transaction) => {
+            await transaction.query(TestTableAllTypesV2.dropColumns(['some_new_fk', 'some_new_fk_same_target']))
         }))
 
         const databaseSchema = DatabaseSchema({
@@ -117,7 +121,7 @@ describe('migrate latest', () => {
         await databaseSchema.init()
         await databaseSchema.migrateLatest()
 
-        expect(databaseSchema.getVersion()).toBe(3)
+        expect(databaseSchema.getVersion()).toBe(4)
 
         const tableAColumnsResults = await database.query(SQL.raw(`
             SELECT column_name
