@@ -1,4 +1,4 @@
-import { postgresConfigFromEnv, DatabaseClient } from "../../database-client";
+import { postgresConfigFromEnv, DatabaseClient, IDatabaseClient } from "../../database-client";
 import { Pool } from "pg";
 import { v4 as uuid } from 'uuid';
 
@@ -21,3 +21,10 @@ export const makeTestDatabase = async () => {
 
 	return { database, cleanupHook, clientConfig: clientConfigWithoutDatabase, testDatabaseName };
 }
+
+export const makeMockDatabase = (): IDatabaseClient => ({
+	query: jest.fn(),
+	batch: jest.fn(),
+	close: jest.fn(),
+	transaction: jest.fn(),
+})
