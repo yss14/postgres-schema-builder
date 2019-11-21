@@ -51,6 +51,27 @@ export namespace SQL {
 		`;
 	}
 
+	export const addColumns = (tableName: string, columns: Columns): string => {
+		const entries = Object.entries(columns).map(([name, column]) => ({ name, ...column }));
+		// const foreignKeyConstraints: IReferenceConstraintInternal[] = collectForeignKeyConstraints(entries);
+
+		const addTableColumnStatement = `
+			ALTER TABLE ${tableName}
+			${entries.map(entry => `ADD COLUMN ${prepareCreateColumnStatement(entry)}`).join(',\n')};
+		`
+
+		return addTableColumnStatement
+	}
+
+	export const dropColumns = (tableName: string, columns: string[]): string => {
+		const dropTableColumnsStatement = `
+			ALTER TABLE ${tableName}
+			${columns.map(column => `DROP COLUMN ${column}`).join(',')};
+		`
+
+		return dropTableColumnsStatement
+	}
+
 	export const insert = (tableName: string, subset: string[]) => {
 		const cql = `INSERT INTO ${tableName}`
 			+ ` ( ${subset.map(column => `"${column}"`).join(", ")} )`

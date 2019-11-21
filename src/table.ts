@@ -138,6 +138,7 @@ export const Query = (sql: string, values?: unknown[]): IQuery<{}> => ({ sql, va
 
 type NonEmpty<Type> = [Type, ...Type[]];
 export type Keys<C extends Columns> = (keyof C)[] & (NonEmpty<keyof C> | []);
+type Key<C extends Columns> = (keyof C) & NonEmpty<keyof C>;
 
 export interface ITable<C extends Columns> {
 	readonly name: string;
@@ -152,6 +153,8 @@ export interface ITable<C extends Columns> {
 		(conditions: ColumnValues<C, Where>) => IQuery<Pick<C, Extract<Subset[number], string>>>;
 	drop(): IQuery<{}>;
 	delete<Where extends Keys<C>>(where: Where): (conditions: ColumnValues<C, Where>) => IQuery<{}>;
+	addColumns(columns: Columns): IQuery<{}>;
+	dropColumns<Subset extends Key<C>>(columns: (Subset | string)[]): IQuery<{}>;
 }
 
 export const Table =
@@ -211,5 +214,11 @@ export const Table =
 					values,
 				})
 			},
+			addColumns: (columns) => ({
+				sql: SQL.addColumns(table, columns),
+			}),
+			dropColumns: (columns) => ({
+				sql: SQL.dropColumns(table, columns.filter(isString)),
+			})
 		}
 	}
