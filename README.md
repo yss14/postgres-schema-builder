@@ -3,6 +3,7 @@ Simple postgres schema builder for Node.JS leveraging Typescript's type system t
 
 [![Build Status](https://travis-ci.com/yss14/postgres-schema-builder.svg?branch=master)](https://travis-ci.com/yss14/postgres-schema-builder)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=yss14/postgres-schema-builder)](https://dependabot.com)
+[![codecov](https://codecov.io/gh/yss14/postgres-schema-builder/branch/master/graph/badge.svg)](https://codecov.io/gh/yss14/postgres-schema-builder)
 
 ## Installation
 `npm i postgres-schema-builder` or `yarn add postgres-schema-builder`
@@ -156,7 +157,7 @@ await database.transaction(async (client) => {
 * Improve and extend docs
 * Allow `insert` and `insertFromObj` returning the inserted data
 * Enable client to perform multiple queries
-* Introduce database management object enabling schema versioning with migrations
+* Introduce database management object enabling schema versioning with migrations (try out [v1.1.0-beta.0](https://github.com/yss14/postgres-schema-builder/releases/tag/v1.1.0-beta.0))
 * Extend test cases and improve code coverage
 
 ## Support
