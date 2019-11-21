@@ -3,6 +3,7 @@ Simple postgres schema builder for Node.JS leveraging Typescript's type system t
 
 [![Build Status](https://travis-ci.com/yss14/postgres-schema-builder.svg?branch=master)](https://travis-ci.com/yss14/postgres-schema-builder)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=yss14/postgres-schema-builder)](https://dependabot.com)
+[![codecov](https://codecov.io/gh/yss14/postgres-schema-builder/branch/master/graph/badge.svg)](https://codecov.io/gh/yss14/postgres-schema-builder)
 
 ## Installation
 `npm i postgres-schema-builder` or `yarn add postgres-schema-builder`
