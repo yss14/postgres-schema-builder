@@ -20,11 +20,9 @@ addons:
 install:  
   - npm install
 
-jobs:
-  include:
-    - stage: Build and Test
-      script:
-        - npm run build
-        - npm run verify
-        - npm run lint
-        - npm run test:ci
+
+script:
+  - npm run build
+  - npm run verify
+  - npm run lint
+  - npm run test:ci
