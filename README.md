@@ -41,7 +41,7 @@ export namespace DatabaseV1 {
 }
 ```
 
-All available `ColumnType`s can be found in the (`table.ts file`)[https://github.com/yss14/postgres-schema-builder/blob/master/src/table.ts#L78].
+All available `ColumnType`s can be found in the [`table.ts file`](https://github.com/yss14/postgres-schema-builder/blob/master/src/table.ts#L78).
 
 ### Interfaces and Table API
 
