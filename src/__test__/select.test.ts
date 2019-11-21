@@ -10,7 +10,7 @@ afterAll(async () => {
 });
 
 const date1 = new Date();
-const date2 = moment().add(5, 'hours').toDate();
+const date2 = moment().add(19, 'hours').toDate();
 const uid = uuid();
 
 const dataset1 = {
@@ -23,7 +23,7 @@ const dataset1 = {
 };
 const dataset2 = {
 	some_bool: false,
-	some_date: date1,
+	some_date: date2,
 	some_string: 'hello world 2',
 	some_string_nullable: null,
 	some_timestamp: date2,
