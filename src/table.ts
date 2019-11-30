@@ -122,7 +122,7 @@ export const SQLFunc = (cqlFunction: NativeFunction | string): SQLFunction => ({
 export const isSQLFunction = (value: any): value is SQLFunction => typeof value.func === 'string';
 
 type ColumnValuesBase<C extends Columns, Subset extends (keyof C)[]> =
-	{ [key in keyof Subset]: TableRecord<C>[Extract<Subset[key], keyof C>] | SQLFunction };
+	{ [key in keyof Subset]: TableRecord<C>[Extract<Subset[key], keyof C>] | SQLFunction | IWhereCondition };
 
 type ColumnValues<C extends Columns, Subset extends (keyof C)[]> =
 	ColumnValuesBase<C, Subset>[keyof Subset][] &
@@ -135,6 +135,32 @@ export type IQuery<C extends Columns> = {
 };
 
 export const Query = (sql: string, values?: unknown[]): IQuery<{}> => ({ sql, values });
+
+export interface ISQLArg {
+	toString: () => string;
+}
+
+export interface IWhereCondition {
+	type: 'where_filter',
+	sql: string;
+}
+
+export interface IWhereConditionColumned extends IWhereCondition, ISQLArg {
+	column: string;
+}
+
+const isWhereCondition = (obj: any): obj is IWhereCondition => typeof obj === 'object' && obj.type === 'where_filter'
+
+export const Where = {
+	isNull: (): IWhereCondition => ({
+		type: 'where_filter',
+		sql: 'IS NULL',
+	}),
+	isNotNull: (): IWhereCondition => ({
+		type: 'where_filter',
+		sql: 'IS NOT NULL',
+	}),
+}
 
 type NonEmpty<Type> = [Type, ...Type[]];
 export type Keys<C extends Columns> = (keyof C)[] & (NonEmpty<keyof C> | []);
@@ -192,15 +218,42 @@ export const Table =
 					sql,
 				}
 			},
-			select: (subset, where) => {
-				const sql = subset === '*'
-					? SQL.select(table, subset, where.filter(isString))
-					: SQL.select(table, subset.filter(isString), where.filter(isString));
+			select: (subset, where) => (values: any[]) => {
+				const whereSubstitutions = new Map<number, IWhereConditionColumned>()
+				const whereStringValued = where.filter(isString)
 
-				return (values) => ({
+				const finalValues = values.filter((value, idx) => {
+					if (isWhereCondition(value)) {
+						const whereCond = value
+
+						whereSubstitutions.set(idx, {
+							...whereCond,
+							column: whereStringValued[idx],
+							toString: () => `${whereStringValued[idx]} ${whereCond.sql}`
+						})
+
+						return false
+					}
+
+					return true
+				})
+
+				const finalWhere = whereStringValued.map((where, idx) => {
+					if (whereSubstitutions.has(idx)) {
+						return whereSubstitutions.get(idx)!
+					}
+
+					return where
+				})
+
+				const sql = subset === '*'
+					? SQL.select(table, subset, finalWhere)
+					: SQL.select(table, subset.filter(isString), finalWhere)
+
+				return {
 					sql,
-					values,
-				});
+					values: finalValues,
+				}
 			},
 			drop: () => ({
 				sql: SQL.dropTable(table),

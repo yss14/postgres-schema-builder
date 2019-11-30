@@ -1,4 +1,4 @@
-import { Columns, Column, IReferenceConstraintInternal, isCollection, isSQLFunction, ForeignKeyUpdateDeleteRule, ICreateIndexStatement, IQuery, isJSONType } from "./table";
+import { Columns, Column, IReferenceConstraintInternal, isCollection, isSQLFunction, ForeignKeyUpdateDeleteRule, ICreateIndexStatement, IQuery, isJSONType, IWhereConditionColumned, ISQLArg } from "./table";
 import * as pgEscape from 'pg-escape';
 import { dateToSQLUTCFormat } from "./sql-utils";
 import moment from 'moment'
@@ -131,10 +131,23 @@ export namespace SQL {
 		return cql;
 	}
 
-	export const select = (tableName: string, subset: string[] | '*', where: string[]) => {
+	const whereConditionToString = (cond: string | ISQLArg, idx: number) => {
+		if (typeof cond === 'string') {
+			return `("${cond}" = $${idx + 1})`
+		}
+
+		return cond.toString()
+	}
+
+	type Select = {
+		(tableName: string, subset: string[] | '*', where: string[]): string;
+		(tableName: string, subset: string[] | '*', where: ISQLArg[]): string;
+	}
+
+	export const select: Select = (tableName: string, subset: string[] | '*', where: (string | IWhereConditionColumned)[]) => {
 		const cql = `SELECT ${subset === "*" ? "*" : subset.map(column => `"${column}"`).join(", ")}`
 			+ ` FROM ${tableName}`
-			+ ` WHERE ${where.map((column, i) => `("${column}" = $${i + 1})`).join(' AND ')}`
+			+ ` WHERE ${where.map(whereConditionToString).join(' AND ')}`
 			+ `;`;
 
 		return cql;
