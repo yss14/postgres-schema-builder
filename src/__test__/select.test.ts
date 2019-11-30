@@ -2,6 +2,7 @@ import { makeTestDatabase } from "./utils/make-test-database";
 import { TestTableAllTypes } from "./fixtures/test-tables";
 import moment = require("moment");
 import { v4 as uuid } from 'uuid';
+import { Where } from "../table";
 
 const cleanupHooks: (() => Promise<void>)[] = [];
 
@@ -26,6 +27,15 @@ const dataset2 = {
 	some_date: date2,
 	some_string: 'hello world 2',
 	some_string_nullable: null,
+	some_timestamp: date2,
+	some_uuid: uid,
+};
+
+const dataset3 = {
+	some_bool: false,
+	some_date: date2,
+	some_string: 'hello world 2',
+	some_string_nullable: 'hello world 2',
 	some_timestamp: date2,
 	some_uuid: uid,
 };
@@ -76,3 +86,38 @@ test('select where returns results', async () => {
 		{ ...dataset1, some_date: moment(date1).format('YYYY-MM-DD'), id: 1 },
 	]);
 });
+
+test('select where is not null', async () => {
+	const { database, cleanupHook } = await makeTestDatabase();
+	cleanupHooks.push(cleanupHook);
+
+	await database.query(TestTableAllTypes.create());
+
+	await database.query(TestTableAllTypes.insertFromObj(dataset1));
+	await database.query(TestTableAllTypes.insertFromObj(dataset2));
+	await database.query(TestTableAllTypes.insertFromObj(dataset3));
+
+	const results = await database.query(TestTableAllTypes.select('*', ['some_string_nullable'])([Where.isNotNull()]));
+
+	expect(results).toEqual([
+		{ ...dataset3, some_date: moment(date2).format('YYYY-MM-DD'), id: 3 },
+	])
+})
+
+test('select where is null', async () => {
+	const { database, cleanupHook } = await makeTestDatabase();
+	cleanupHooks.push(cleanupHook);
+
+	await database.query(TestTableAllTypes.create());
+
+	await database.query(TestTableAllTypes.insertFromObj(dataset1));
+	await database.query(TestTableAllTypes.insertFromObj(dataset2));
+	await database.query(TestTableAllTypes.insertFromObj(dataset3));
+
+	const results = await database.query(TestTableAllTypes.select('*', ['some_string_nullable'])([Where.isNull()]));
+
+	expect(results).toEqual([
+		{ ...dataset1, some_date: moment(date1).format('YYYY-MM-DD'), id: 1 },
+		{ ...dataset2, some_date: moment(date2).format('YYYY-MM-DD'), id: 2 },
+	])
+})
