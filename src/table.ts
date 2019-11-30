@@ -229,7 +229,7 @@ export const Table =
 						whereSubstitutions.set(idx, {
 							...whereCond,
 							column: whereStringValued[idx],
-							toString: () => `${whereStringValued[idx]} ${whereCond.sql}`
+							toString: () => `${whereStringValued[idx]} ${whereCond.sql}`,
 						})
 
 						return false
