@@ -1,7 +1,7 @@
 import { Columns, Column, IReferenceConstraintInternal, isCollection, isSQLFunction, ForeignKeyUpdateDeleteRule, ICreateIndexStatement, IQuery, isJSONType, IWhereConditionColumned, ISQLArg } from "./table";
 import * as pgEscape from 'pg-escape';
 import { dateToSQLUTCFormat } from "./sql-utils";
-import moment from 'moment'
+import * as moment from 'moment'
 import { flatten } from './utils'
 
 const isStringArray = (arr: any): arr is string[] => Array.isArray(arr) && arr.every(item => typeof item === 'string')
