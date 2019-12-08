@@ -30,7 +30,8 @@
 		"test:cov": "jest --config=jest.json --collectCoverage --detectOpenHandles --colors --forceExit",
 		"test:ci": "npm run test:cov && codecov",
 		"lint": "eslint ./src --ext .ts",
-		"lint:fix": "eslint ./src --ext .ts --fix"
+		"lint:fix": "eslint ./src --ext .ts --fix",
+		"prepublish": "npm run build"
 	},
 	"bugs": {
 		"url": "https://github.com/yss14/postgres-schema-builder/issues"
