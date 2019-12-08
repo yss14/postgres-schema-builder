@@ -107,7 +107,6 @@ export const DatabaseSchema = ({ client, createStatements, name, migrations, log
             throw new Error('Target version of migrateToVersion() has to be greater 1')
         }
 
-
         for (let newVersion = version; newVersion <= targetVersion; newVersion++) {
             await client.transaction(async (transaction) => {
                 const currentVersion = await getCurrentVersionAndLockSchema(transaction, true)
