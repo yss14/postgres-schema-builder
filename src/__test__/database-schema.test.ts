@@ -321,3 +321,50 @@ describe('migrate to version', () => {
             .rejects.toThrowError('Target version of migrateToVersion() has to be greater 1')
     })
 })
+
+describe('multi-node environment', () => {
+    const simulateNode = async (nodeOprations: (...args: any[]) => Promise<void>, nodeName: string) => {
+        await nodeOprations(nodeName)
+    }
+
+    test('test', async () => {
+        const { database } = await setupTest()
+
+        const migration2 = jest.fn()
+        const migration3 = jest.fn()
+        const migration4 = jest.fn()
+        const migration5 = jest.fn()
+
+        const migrations = new Map<number, IMigration>()
+        migrations.set(5, Migration(migration5))
+        migrations.set(2, Migration(migration2))
+        migrations.set(3, Migration(migration3))
+        migrations.set(4, Migration(migration4))
+
+        const operations = async (nodeName: string) => {
+            const databaseSchema = DatabaseSchema({
+                name: 'TestSchema',
+                client: database,
+                createStatements: composeCreateTableStatements(TestTables),
+                migrations,
+            })
+
+            await databaseSchema.init()
+            await databaseSchema.migrateLatest()
+
+            expect(databaseSchema.getVersion()).toBe(5)
+        }
+
+        await Promise.all([
+            simulateNode(operations, 'Node1'),
+            simulateNode(operations, 'Node2'),
+            simulateNode(operations, 'Node3'),
+            simulateNode(operations, 'Node4'),
+        ])
+
+        expect(migration2).toHaveBeenCalledTimes(1)
+        expect(migration3).toHaveBeenCalledTimes(1)
+        expect(migration4).toHaveBeenCalledTimes(1)
+        expect(migration5).toHaveBeenCalledTimes(1)
+    })
+})
