@@ -157,7 +157,6 @@ export const DatabaseSchema = ({ client, createStatements, name, migrations, log
         init,
         migrateLatest,
         migrateToVersion,
-        getCurrentVersionAndLockSchema, // TODO remove
     }
 }
 
