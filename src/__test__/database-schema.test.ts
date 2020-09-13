@@ -197,9 +197,7 @@ describe("migrate latest", () => {
 
 		await databaseSchema.init()
 
-		await expect(databaseSchema.migrateLatest()).rejects.toThrowError(
-			"cannot drop column id of table test_table_a because other objects depend on it",
-		)
+		await expect(databaseSchema.migrateLatest()).rejects.toThrow()
 		expect(databaseSchema.getVersion()).toBe(1)
 	})
 
