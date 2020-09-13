@@ -411,3 +411,81 @@ describe("multi-node environment", () => {
 		expect(migration5).toHaveBeenCalledTimes(1)
 	})
 })
+
+describe("read access during migration", () => {
+	test("usage of database client is non-blocking", async () => {
+		const { database } = await setupTest()
+
+		const migrations = new Map<number, IMigration>()
+		migrations.set(
+			2,
+			Migration(async ({ database }) => {
+				const statements = [TestTableB.drop()]
+
+				const data = await database.query(TestTableB.selectAll("*"))
+
+				expect(data).toBeDefined()
+
+				return statements
+			}),
+		)
+
+		const databaseSchema = DatabaseSchema({
+			name: "TestSchema",
+			client: database,
+			createStatements: composeCreateTableStatements(TestTables),
+			migrations,
+		})
+
+		await databaseSchema.init()
+		await databaseSchema.migrateLatest()
+
+		expect(databaseSchema.getVersion()).toBe(2)
+
+		const tableBColumnsResults = await database.query(
+			SQL.raw(`
+            SELECT *
+            FROM information_schema.tables 
+            WHERE table_name='${TestTableB.name}';
+        `),
+		)
+
+		expect(tableBColumnsResults.length).toBe(0)
+	})
+
+	// this doesn't work right now :()
+	test.skip("usage of transaction client is blocking", async (done) => {
+		const { database } = await setupTest()
+
+		const migrations = new Map<number, IMigration>()
+		migrations.set(
+			2,
+			Migration(async ({ transaction, database }) => {
+				await transaction.query(TestTableB.drop())
+
+				await database.query(TestTableB.selectAll("*"))
+			}),
+		)
+
+		const databaseSchema = DatabaseSchema({
+			name: "TestSchema",
+			client: database,
+			createStatements: composeCreateTableStatements(TestTables),
+			migrations,
+		})
+
+		await databaseSchema.init()
+
+		const promise = new Promise(async (resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error("Migration got stuck"))
+			}, 2000)
+			await databaseSchema.migrateLatest()
+
+			clearTimeout(timeout)
+			resolve()
+		})
+
+		await expect(promise).rejects.toThrowError("Migration got stuck")
+	})
+})

@@ -36,7 +36,7 @@ export interface IMigration {
 	up: (args: IUpDownArgs) => Promise<void | IQuery<{}>[]>
 }
 
-export const Migration = (up: (args: IUpDownArgs) => Promise<void>): IMigration => ({ up })
+export const Migration = (up: (args: IUpDownArgs) => Promise<void | IQuery<{}>[]>): IMigration => ({ up })
 
 export type CreateStatement = string
 
