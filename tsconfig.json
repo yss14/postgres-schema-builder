@@ -14,12 +14,8 @@
 		"strictNullChecks": true,
 		"skipDefaultLibCheck": true,
 		"sourceMap": true,
+		"esModuleInterop": true
 	},
-	"include": [
-		"src/index.ts",
-	],
-	"exclude": [
-		"node_modules",
-		"build"
-	]
+	"include": ["src/index.ts"],
+	"exclude": ["node_modules", "build"]
 }
