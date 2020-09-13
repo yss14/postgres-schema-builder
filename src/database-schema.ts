@@ -1,6 +1,7 @@
 import { IDatabaseClient, IDatabaseBaseClient } from "./database-client"
-import { TableSchema, ColumnType, NativeFunction, Table } from "./table"
+import { TableSchema, ColumnType, NativeFunction, Table, IQuery } from "./table"
 import { SQL } from "./sql"
+import max from "lodash.max"
 
 const schema_management = TableSchema({
 	name: {
@@ -26,33 +27,34 @@ const updateSchemaVersionQuery = (name: string, newVersion: number) =>
 
 export type IDatabaseSchema = ReturnType<typeof DatabaseSchema>
 
-export interface IMigration {
-	up: (client: IDatabaseBaseClient) => Promise<void>
+export interface IUpDownArgs {
+	transaction: IDatabaseBaseClient
+	database: IDatabaseBaseClient
 }
 
-export const Migration = (up: (client: IDatabaseBaseClient) => Promise<void>): IMigration => ({ up })
+export interface IMigration {
+	up: (args: IUpDownArgs) => Promise<void | IQuery<{}>[]>
+}
+
+export const Migration = (up: (args: IUpDownArgs) => Promise<void>): IMigration => ({ up })
 
 export type CreateStatement = string
 
 export interface IDatabaseSchemaArgs {
 	name: string
-	version: number
 	client: IDatabaseClient
 	createStatements: CreateStatement[]
 	migrations: Map<number, IMigration>
 	logMigrations?: boolean
 }
 
-export const DatabaseSchema = ({
-	client,
-	createStatements,
-	name,
-	migrations,
-	logMigrations,
-	version: initialVersion,
-}: IDatabaseSchemaArgs) => {
+export const DatabaseSchema = ({ client, createStatements, name, migrations, logMigrations }: IDatabaseSchemaArgs) => {
 	let version = 0
 	let isInitialized = false
+
+	const getLatestMigrationVersion = () => {
+		return parseInt(max(Object.keys(migrations)) || "1")
+	}
 
 	const init = async () => {
 		if (isInitialized) {
@@ -66,6 +68,8 @@ export const DatabaseSchema = ({
 				const versionDBResults = await transaction.query(selectVersionQuery(name))
 
 				if (versionDBResults.length === 0) {
+					const initialVersion = getLatestMigrationVersion()
+
 					await transaction.query({
 						sql: createStatements.join("\n"),
 					})
@@ -158,7 +162,14 @@ export const DatabaseSchema = ({
 					throw new Error(`Migration with version ${newVersion} not found. Aborting migration process...`)
 				}
 
-				await migration.up(transaction)
+				const migrationQueries = await migration.up({ transaction, database: client })
+
+				if (Array.isArray(migrationQueries)) {
+					for (const migrationQuery of migrationQueries) {
+						await transaction.query(migrationQuery)
+					}
+				}
+
 				await transaction.query(updateSchemaVersionQuery(name, newVersion))
 				await transaction.query(setSchemaLockQuery(false))
 
