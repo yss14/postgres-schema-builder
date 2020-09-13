@@ -11,9 +11,19 @@ afterAll(async () => {
 	await Promise.all(cleanupHooks.map((hook) => hook()))
 })
 
-const setupTest = async () => {
+const setupTest = async ({ createSchema }: { createSchema?: boolean } = {}) => {
 	const { database, cleanupHook } = await makeTestDatabase()
 	cleanupHooks.push(cleanupHook)
+
+	if (createSchema !== false) {
+		const databaseSchema = DatabaseSchema({
+			name: "TestSchema",
+			client: database,
+			createStatements: composeCreateTableStatements(TestTables),
+			migrations: new Map<number, IMigration>(),
+		})
+		await databaseSchema.init()
+	}
 
 	return { database }
 }
