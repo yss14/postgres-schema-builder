@@ -53,7 +53,7 @@ export const DatabaseSchema = ({ client, createStatements, name, migrations, log
 	let isInitialized = false
 
 	const getLatestMigrationVersion = () => {
-		return parseInt(max(Object.keys(migrations)) || "1")
+		return max(Array.from(migrations.keys())) || 1
 	}
 
 	const init = async () => {
