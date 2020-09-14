@@ -1,5 +1,5 @@
 import { IDatabaseClient, IDatabaseBaseClient } from "./database-client"
-import { TableSchema, ColumnType, NativeFunction, Table, IQuery } from "./table"
+import { TableSchema, ColumnType, NativeFunction, Table, IQuery, Columns } from "./table"
 import { SQL } from "./sql"
 import max from "lodash.max"
 
@@ -198,5 +198,72 @@ export const DatabaseSchema = ({ client, createStatements, name, migrations, log
 		init,
 		migrateLatest,
 		migrateToVersion,
+	}
+}
+
+type ITables = { [name: string]: Columns }
+
+export const SchemaDiff = <OldTables extends ITables, Tables extends ITables>(oldTables: OldTables, tables: Tables) => {
+	type NewKeys = Extract<keyof Tables, string>
+	type OldKeys = Extract<keyof OldTables, string>
+	type CommonKeys = Extract<NewKeys, OldKeys>
+
+	return {
+		dropTable: (table: Exclude<OldKeys, NewKeys>) => SQL.dropTable(table, true),
+
+		createTable: (table: Exclude<NewKeys, OldKeys>) => SQL.createTable(table, tables[table]),
+
+		replaceTables: (replace: CommonKeys[]) => [
+			...replace.map((table) => SQL.dropTable(table, true)),
+			...[...replace].reverse().map((table) => SQL.createTable(table, tables[table])),
+		],
+
+		dropTableColumn: <Name extends CommonKeys>(
+			table: Name,
+			column: Extract<Exclude<keyof OldTables[Name], keyof Tables[Name]>, string>,
+		) => SQL.dropTableColumn(table, column, true),
+
+		addTableColumn: <Name extends CommonKeys>(
+			table: Name,
+			column: Extract<Exclude<keyof Tables[Name], keyof OldTables[Name]>, string>,
+		) => SQL.addTableColumn(table, { name: column, ...tables[table][column] }, true),
+
+		replaceTableColumn: <Name extends CommonKeys>(
+			table: Name,
+			column: Extract<Extract<keyof Tables[Name], keyof OldTables[Name]>, string>,
+		) => [
+			SQL.dropTableColumn(table, column, true),
+			SQL.addTableColumn(table, { name: column, ...tables[table][column] }, true),
+		],
+
+		addRequiredColumn: <Name extends CommonKeys>(
+			table: Name,
+			column: Extract<Exclude<keyof Tables[Name], keyof OldTables[Name]>, string>,
+			updates: string[],
+		) =>
+			[
+				SQL.addTableColumn(table, { name: column, ...tables[table][column], nullable: true }, true),
+				...updates,
+				SQL.raw(`ALTER TABLE ${table} ALTER COLUMN ${column} SET NOT NULL;`).sql,
+			].join("\n"),
+
+		replaceRequiredColumn: <Name extends CommonKeys>(
+			table: Name,
+			column: Extract<Extract<keyof Tables[Name], keyof OldTables[Name]>, string>,
+		) => {
+			const oldColumn = `__old_${column}`
+
+			return [
+				SQL.dropConstraint(table, column, oldTables[table][column]),
+				SQL.raw(`ALTER TABLE ${table} RENAME COLUMN ${column} TO ${oldColumn};`),
+				SQL.addTableColumn(table, { name: column, ...tables[table][column], nullable: true }, true),
+				SQL.raw(`UPDATE ${table} SET ${column} = ${oldColumn}`),
+				SQL.raw(`ALTER TABLE ${table} ALTER COLUMN ${column} SET NOT NULL;`),
+				SQL.dropTableColumn(table, oldColumn, true),
+			]
+		},
+
+		addIndex: <Name extends CommonKeys>(table: Name, column: keyof Tables[Name] & string, unique: boolean) =>
+			SQL.createIndex(unique, table, column),
 	}
 }

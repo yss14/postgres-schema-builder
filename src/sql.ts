@@ -191,7 +191,68 @@ export namespace SQL {
 		return cql
 	}
 
-	export const dropTable = (tableName: string) => `DROP TABLE ${tableName};`
+	export const dropTable = (tableName: string, dropConstraints?: boolean) => {
+		const statements: string[] = []
+
+		if (dropConstraints === true) {
+			statements.push(dropAllConstraintsOfTable(tableName))
+		}
+
+		statements.push(`DROP TABLE ${tableName};`)
+
+		return statements.join("\n")
+	}
+
+	export const dropTableColumn = (tableName: string, column: string, cascade?: boolean): string => {
+		const sql = `
+			ALTER TABLE ${tableName}
+			DROP COLUMN IF EXISTS ${column} ${cascade === true ? "CASCADE" : ""};
+		`
+
+		return sql
+	}
+
+	export const addTableColumn = (
+		tableName: string,
+		column: { name: string } & Column,
+		ifNotExists: boolean = false,
+	): string => {
+		let foreignKeyConstraints = collectForeignKeyConstraints([column])
+
+		const sql = `
+			ALTER TABLE ${tableName}
+			ADD COLUMN ${ifNotExists ? "IF NOT EXISTS" : ""} ${prepareCreateColumnStatement(column)};
+			${
+				foreignKeyConstraints.length > 0
+					? prepareForeignKeyConstraintStatements(tableName, foreignKeyConstraints)
+							.map((stmt) => `ALTER TABLE ${tableName} ADD CONSTRAINT ${stmt};`)
+							.join("\n")
+					: ""
+			}
+		`
+
+		return sql
+	}
+
+	export const dropConstraint = (tableName: string, col: string, info: Column) => {
+		return (info.foreignKeys || [])
+			.map(
+				(fkc) => `
+				ALTER TABLE ${tableName} DROP CONSTRAINT IF EXISTS ${tableName}_${col}_fkey CASCADE;
+			`,
+			)
+			.join("\n")
+	}
+
+	const dropAllConstraintsOfTable = (table: string): string => {
+		const sql = `
+			SELECT 'ALTER TABLE ${table} DROP CONSTRAINT IF EXISTS "' || relname || '";' as pg_drop
+			FROM pg_class
+			WHERE (relkind = 'i' OR relkind = 'p' OR relkind = 'f') AND relname LIKE '${table.toLowerCase()}%';
+		`
+
+		return sql
+	}
 
 	export const createIndex = (unique: boolean, name: string, column: string): string => {
 		const sql = `CREATE ${unique ? "UNIQUE " : ""}INDEX IF NOT EXISTS ${name}_${column}_${
