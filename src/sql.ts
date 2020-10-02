@@ -217,7 +217,7 @@ export namespace SQL {
 		column: { name: string } & Column,
 		ifNotExists: boolean = false,
 	): string => {
-		let foreignKeyConstraints = collectForeignKeyConstraints([column])
+		const foreignKeyConstraints = collectForeignKeyConstraints([column])
 
 		const sql = `
 			ALTER TABLE ${tableName}
