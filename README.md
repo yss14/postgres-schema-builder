@@ -106,6 +106,100 @@ const query = SQL.raw<typeof Tables.users & typeof Tables.user_emails>(`
 `, [42])
 ```
 
+### Schema Management + Migrations
+
+```typescript
+// database schema init, e.g. database.ts
+
+import {
+	DatabaseSchema,
+	composeCreateTableStatements,
+} from "postgres-schema-builder"
+
+const migrations = Migrations()
+
+const schema = DatabaseSchema({
+	client: database,
+	name: "MyDatabaseSchema",
+	createStatements: composeCreateTableStatements(Tables),
+	migrations,
+})
+
+await schema.init()
+await schema.migrateLatest()
+
+// database migrations, e.g. migrations.ts
+
+export const Migrations = () => {
+	const migrations = new Map<number, IMigration>()
+
+	migrations.set(
+		2,
+		Migration(async ({ transaction }) => {
+			await transaction.query(
+				SQL.raw(SQL.addColumns("song_types", { song_type_id: { type: ColumnType.UUID, nullable: true } })),
+			)
+			await transaction.query(SQL.raw(SQL.addColumns("genres", { genre_id: DatabaseV2.genres.genre_id })))
+
+			await transaction.query(
+				SQL.raw(`
+				UPDATE genres SET genre_id = uuid_generate_v4();
+				UPDATE song_types SET song_type_id = uuid_generate_v4();
+			`),
+			)
+
+			...
+		}),
+	)
+
+	migrations.set(
+		3,
+		Migration(async ({ transaction }) => {
+			await transaction.query(SQL.raw(SQL.createTable("captchas", DatabaseV3.captchas)))
+			await transaction.query(SQL.raw(SQL.createIndex(true, "users", "email")))
+		}),
+	)
+
+    // migration with schema diff detection
+	migrations.set(
+		4,
+		Migration(async ({ database }) => {
+			const updates: IQuery<{}>[] = []
+			const diffs = SchemaDiff(DatabaseV3, DatabaseV4)
+
+			updates.push(
+				SQL.raw(
+					diffs.addRequiredColumn("shares", "quota", [
+						`UPDATE shares SET quota = ${defaultShareQuota} WHERE is_library = True;`,
+						`UPDATE shares SET quota = 0 WHERE is_library = False;`,
+					]),
+				),
+			)
+			updates.push(SQL.raw(diffs.addTableColumn("shares", "quota_used")))
+
+			const SongsTableV4 = Table(DatabaseV4, "songs")
+			const songs = await database.query(SongsTableV4.selectAll("*"))
+			songs.forEach((song) =>
+				updates.push(
+					SongsTableV4.update(["sources"], ["song_id"])(
+						[
+							{
+								data: song.sources.data.map((source) => ({ ...source, fileSize: 0 })),
+							},
+						],
+						[song.song_id],
+					),
+				),
+			)
+
+			return updates
+		}),
+	)
+
+	return migrations
+}
+```
+
 ### Database Client
 
 `postgres-schema-builder` also provides a small database client to perform our typesafe and custom queries.
@@ -157,7 +251,6 @@ await database.transaction(async (client) => {
 * Improve and extend docs
 * Allow `insert` and `insertFromObj` returning the inserted data
 * Enable client to perform multiple queries
-* Introduce database management object enabling schema versioning with migrations (try out [v1.1.0-beta.0](https://github.com/yss14/postgres-schema-builder/releases/tag/v1.1.0-beta.0))
 * Extend test cases and improve code coverage
 
 ## Support
