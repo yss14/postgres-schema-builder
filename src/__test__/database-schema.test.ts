@@ -484,7 +484,7 @@ describe("read access during migration", () => {
 
 		await databaseSchema.init()
 
-		const promise = new Promise(async (resolve, reject) => {
+		const promise = new Promise<void>(async (resolve, reject) => {
 			const timeout = setTimeout(() => {
 				reject(new Error("Migration got stuck"))
 			}, 2000)
