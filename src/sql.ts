@@ -266,6 +266,18 @@ export namespace SQL {
 		sql,
 		values,
 	})
+
+	export const dropView = (view: string): string => {
+		const sql = `DROP VIEW IF EXISTS ${view} CASCADE;`
+
+		return sql
+	}
+
+	export const createView = (view: string, query: string): string => {
+		const sql = `CREATE OR REPLACE VIEW ${view} AS (${query});`
+
+		return sql
+	}
 }
 
 const collectForeignKeyConstraints = (columns: ({ name: string } & Column)[]): IReferenceConstraintInternal[] => {

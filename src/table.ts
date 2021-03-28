@@ -1,25 +1,25 @@
-import { SQL } from "./sql";
-import { isString } from 'util';
+import { SQL } from "./sql"
+import { isString } from "util"
 
 export interface Collection<T extends ColumnType> {
-	type: T;
-	collection: 'array';
+	type: T
+	collection: "array"
 }
 
-export const isCollection = (obj: any): obj is Collection<ColumnType> => obj.collection === 'array';
+export const isCollection = (obj: any): obj is Collection<ColumnType> => obj.collection === "array"
 
-export const PArray = <T extends ColumnType>(type: T): Collection<T> => ({ collection: 'array', type });
+export const PArray = <T extends ColumnType>(type: T): Collection<T> => ({ collection: "array", type })
 
 export enum ColumnType {
-	BigInt = 'bigint',
-	Boolean = 'boolean',
-	Varchar = 'varchar',
-	Date = 'date',
-	Integer = 'integer',
-	Text = 'text',
-	Timestamp = 'timestamp',
-	TimestampTZ = 'timestamptz',
-	UUID = 'uuid',
+	BigInt = "bigint",
+	Boolean = "boolean",
+	Varchar = "varchar",
+	Date = "date",
+	Integer = "integer",
+	Text = "text",
+	Timestamp = "timestamp",
+	TimestampTZ = "timestamptz",
+	UUID = "uuid",
 }
 
 export enum ForeignKeyUpdateDeleteRule {
@@ -27,259 +27,283 @@ export enum ForeignKeyUpdateDeleteRule {
 	Restrict,
 	SetNull,
 	NoAction,
-	SetDefault
+	SetDefault,
 }
 
 export interface IReferenceConstraint {
-	targetTable: string,
-	targetColumn: string,
-	onUpdate?: ForeignKeyUpdateDeleteRule,
+	targetTable: string
+	targetColumn: string
+	onUpdate?: ForeignKeyUpdateDeleteRule
 	onDelete?: ForeignKeyUpdateDeleteRule
 }
 
 export interface IReferenceConstraintInternal extends IReferenceConstraint {
-	column: string;
+	column: string
 }
 
 export interface ICreateIndexStatement {
-	table?: string,
-	column: string,
+	table?: string
+	column: string
 	unique: boolean
 }
 
 export interface Column {
-	type: ColumnType | Collection<ColumnType> | IColumnTypeJson<unknown>;
-	primaryKey?: boolean;
-	defaultValue?: unknown | SQLFunction;
-	nullable?: boolean;
-	autoIncrement?: boolean;
-	foreignKeys?: IReferenceConstraint[];
-	createIndex?: boolean;
-	unique?: boolean;
+	type: ColumnType | Collection<ColumnType> | IColumnTypeJson<unknown>
+	primaryKey?: boolean
+	defaultValue?: unknown | SQLFunction
+	nullable?: boolean
+	autoIncrement?: boolean
+	foreignKeys?: IReferenceConstraint[]
+	createIndex?: boolean
+	unique?: boolean
 }
 
 export interface Columns {
-	[key: string]: Column;
+	[key: string]: Column
 }
 
 export interface IColumnTypeJson<Type> {
-	json: true,
-	sample?: Type;
+	json: true
+	sample?: Type
 }
 
-export const JSONType = <Type>(): IColumnTypeJson<Type> => ({ json: true });
-export const isJSONType = (type: any): type is IColumnTypeJson<unknown> => typeof type === 'object' && type.json === true;
+export const JSONType = <Type>(): IColumnTypeJson<Type> => ({ json: true })
+export const isJSONType = (type: any): type is IColumnTypeJson<unknown> =>
+	typeof type === "object" && type.json === true
 
-type BigInteger = BigInt | number;
+type BigInteger = BigInt | number
 
-export const TableSchema = <C extends Columns>(columns: C):
-	{ [key in keyof C]: C[key] } => columns;
+export const TableSchema = <C extends Columns>(columns: C): { [key in keyof C]: C[key] } => columns
 
-type ColumnBaseType<C extends Column> =
-	C extends { type: ColumnType.BigInt } ? BigInteger :
-	C extends { type: ColumnType.Boolean } ? boolean :
-	C extends { type: ColumnType.Varchar } ? string :
-	C extends { type: ColumnType.Date } ? Date :
-	C extends { type: ColumnType.Integer } ? number :
-	C extends { type: ColumnType.Text } ? string :
-	C extends { type: ColumnType.Timestamp } ? Date :
-	C extends { type: ColumnType.TimestampTZ } ? Date :
-	C extends { type: ColumnType.UUID } ? string :
-	C extends { type: Collection<ColumnType.BigInt> } ? BigInteger[] :
-	C extends { type: Collection<ColumnType.Boolean> } ? boolean[] :
-	C extends { type: Collection<ColumnType.Varchar> } ? string[] :
-	C extends { type: Collection<ColumnType.Date> } ? Date[] :
-	C extends { type: Collection<ColumnType.Integer> } ? number[] :
-	C extends { type: Collection<ColumnType.Text> } ? string[] :
-	C extends { type: Collection<ColumnType.Timestamp> } ? Date[] :
-	C extends { type: Collection<ColumnType.TimestampTZ> } ? Date[] :
-	C extends { type: Collection<ColumnType.UUID> } ? string[] :
-	C extends { type: IColumnTypeJson<unknown> } ? Required<C["type"]>["sample"] :
-	unknown;
+type ColumnBaseType<C extends Column> = C extends { type: ColumnType.BigInt }
+	? BigInteger
+	: C extends { type: ColumnType.Boolean }
+	? boolean
+	: C extends { type: ColumnType.Varchar }
+	? string
+	: C extends { type: ColumnType.Date }
+	? Date
+	: C extends { type: ColumnType.Integer }
+	? number
+	: C extends { type: ColumnType.Text }
+	? string
+	: C extends { type: ColumnType.Timestamp }
+	? Date
+	: C extends { type: ColumnType.TimestampTZ }
+	? Date
+	: C extends { type: ColumnType.UUID }
+	? string
+	: C extends { type: Collection<ColumnType.BigInt> }
+	? BigInteger[]
+	: C extends { type: Collection<ColumnType.Boolean> }
+	? boolean[]
+	: C extends { type: Collection<ColumnType.Varchar> }
+	? string[]
+	: C extends { type: Collection<ColumnType.Date> }
+	? Date[]
+	: C extends { type: Collection<ColumnType.Integer> }
+	? number[]
+	: C extends { type: Collection<ColumnType.Text> }
+	? string[]
+	: C extends { type: Collection<ColumnType.Timestamp> }
+	? Date[]
+	: C extends { type: Collection<ColumnType.TimestampTZ> }
+	? Date[]
+	: C extends { type: Collection<ColumnType.UUID> }
+	? string[]
+	: C extends { type: IColumnTypeJson<unknown> }
+	? Required<C["type"]>["sample"]
+	: unknown
 
-type ColumnTypeFinal<C extends Column> =
-	C extends { primaryKey: true } ? ColumnBaseType<C> :
-	C extends { defaultValue: {} } ? ColumnBaseType<C> :
-	C extends { nullable: false } ? ColumnBaseType<C> :
-	ColumnBaseType<C> | null;
+type ColumnTypeFinal<C extends Column> = C extends { primaryKey: true }
+	? ColumnBaseType<C>
+	: C extends { defaultValue: {} }
+	? ColumnBaseType<C>
+	: C extends { nullable: false }
+	? ColumnBaseType<C>
+	: ColumnBaseType<C> | null
 
 export type TableRecord<C extends Columns> = {
-	-readonly [key in keyof C]: ColumnTypeFinal<C[key]>;
-};
+	-readonly [key in keyof C]: ColumnTypeFinal<C[key]>
+}
 
 export enum NativeFunction {
-	Now = 'now()'
+	Now = "now()",
 }
 
 interface SQLFunction {
-	func: NativeFunction | string;
+	func: NativeFunction | string
 }
 
 export const SQLFunc = (cqlFunction: NativeFunction | string): SQLFunction => ({
 	func: cqlFunction,
-});
+})
 
-export const isSQLFunction = (value: any): value is SQLFunction => typeof value.func === 'string';
+export const isSQLFunction = (value: any): value is SQLFunction => typeof value.func === "string"
 
-type ColumnValuesBase<C extends Columns, Subset extends (keyof C)[]> =
-	{ [key in keyof Subset]: TableRecord<C>[Extract<Subset[key], keyof C>] | SQLFunction | IWhereCondition };
+type ColumnValuesBase<C extends Columns, Subset extends (keyof C)[]> = {
+	[key in keyof Subset]: TableRecord<C>[Extract<Subset[key], keyof C>] | SQLFunction | IWhereCondition
+}
 
-type ColumnValues<C extends Columns, Subset extends (keyof C)[]> =
-	ColumnValuesBase<C, Subset>[keyof Subset][] &
-	ColumnValuesBase<C, Subset>;
+type ColumnValues<C extends Columns, Subset extends (keyof C)[]> = ColumnValuesBase<C, Subset>[keyof Subset][] &
+	ColumnValuesBase<C, Subset>
 
 export type IQuery<C extends Columns> = {
-	sql: string;
-	values?: unknown[];
-	columns?: C;
-};
+	sql: string
+	values?: unknown[]
+	columns?: C
+}
 
-export const Query = (sql: string, values?: unknown[]): IQuery<{}> => ({ sql, values });
+export const Query = (sql: string, values?: unknown[]): IQuery<{}> => ({ sql, values })
 
 export interface ISQLArg {
-	toString: () => string;
+	toString: () => string
 }
 
 export interface IWhereCondition {
-	type: 'where_filter',
-	sql: string;
+	type: "where_filter"
+	sql: string
 }
 
 export interface IWhereConditionColumned extends IWhereCondition, ISQLArg {
-	column: string;
+	column: string
 }
 
-const isWhereCondition = (obj: any): obj is IWhereCondition => typeof obj === 'object' && obj.type === 'where_filter'
+const isWhereCondition = (obj: any): obj is IWhereCondition => typeof obj === "object" && obj.type === "where_filter"
 
 export const Where = {
 	isNull: (): IWhereCondition => ({
-		type: 'where_filter',
-		sql: 'IS NULL',
+		type: "where_filter",
+		sql: "IS NULL",
 	}),
 	isNotNull: (): IWhereCondition => ({
-		type: 'where_filter',
-		sql: 'IS NOT NULL',
+		type: "where_filter",
+		sql: "IS NOT NULL",
 	}),
 }
 
-type NonEmpty<Type> = [Type, ...Type[]];
-export type Keys<C extends Columns> = (keyof C)[] & (NonEmpty<keyof C> | []);
+type NonEmpty<Type> = [Type, ...Type[]]
+export type Keys<C extends Columns> = (keyof C)[] & (NonEmpty<keyof C> | [])
 
 export interface ITable<C extends Columns> {
-	readonly name: string;
-	create(): IQuery<{}>;
-	insert<Subset extends Keys<C>>(subset: Subset): (values: ColumnValues<C, Subset>) => IQuery<{}>;
-	insertFromObj<Subset extends TableRecord<C>>(obj: Partial<Subset>): IQuery<{}>;
-	update<Subset extends Keys<C>, Where extends Keys<C>>(subset: Subset, where: Where):
-		(subsetValues: ColumnValues<C, Subset>, whereValues: ColumnValues<C, Where>) => IQuery<{}>;
-	selectAll<Subset extends Keys<C>>(subset: Subset | "*"):
-		IQuery<Pick<C, Extract<Subset[number], string>>>;
-	select<Subset extends Keys<C>, Where extends Keys<C>>(subset: Subset | "*", where: Where, allowFiltering?: boolean):
-		(conditions: ColumnValues<C, Where>) => IQuery<Pick<C, Extract<Subset[number], string>>>;
-	drop(): IQuery<{}>;
-	delete<Where extends Keys<C>>(where: Where): (conditions: ColumnValues<C, Where>) => IQuery<{}>;
-	addColumns(columns: Columns): IQuery<{}>;
-	dropColumns<Subset extends Keys<C>>(columns: Subset): IQuery<{}>;
+	readonly name: string
+	create(): IQuery<{}>
+	insert<Subset extends Keys<C>>(subset: Subset): (values: ColumnValues<C, Subset>) => IQuery<{}>
+	insertFromObj<Subset extends TableRecord<C>>(obj: Partial<Subset>): IQuery<{}>
+	update<Subset extends Keys<C>, Where extends Keys<C>>(
+		subset: Subset,
+		where: Where,
+	): (subsetValues: ColumnValues<C, Subset>, whereValues: ColumnValues<C, Where>) => IQuery<{}>
+	selectAll<Subset extends Keys<C>>(subset: Subset | "*"): IQuery<Pick<C, Extract<Subset[number], string>>>
+	select<Subset extends Keys<C>, Where extends Keys<C>>(
+		subset: Subset | "*",
+		where: Where,
+		allowFiltering?: boolean,
+	): (conditions: ColumnValues<C, Where>) => IQuery<Pick<C, Extract<Subset[number], string>>>
+	drop(): IQuery<{}>
+	delete<Where extends Keys<C>>(where: Where): (conditions: ColumnValues<C, Where>) => IQuery<{}>
+	addColumns(columns: Columns): IQuery<{}>
+	dropColumns<Subset extends Keys<C>>(columns: Subset): IQuery<{}>
 }
 
-export const Table =
-	<Tables extends { [key: string]: Columns }, Table extends Extract<keyof Tables, string>>
-		(tables: Tables, table: Table): ITable<Tables[Table]> => {
-		const columns = tables[table];
+export const Table = <Tables extends { [key: string]: Columns }, Table extends Extract<keyof Tables, string>>(
+	tables: Tables,
+	table: Table,
+): ITable<Tables[Table]> => {
+	const columns = tables[table]
 
-		return {
-			name: table,
-			create: () => ({
-				sql: SQL.createTable(table, columns),
-			}),
-			insert: (subset) => (values) => ({
-				sql: SQL.insert(table, subset.filter(isString)),
+	return {
+		name: table,
+		create: () => ({
+			sql: SQL.createTable(table, columns),
+		}),
+		insert: (subset) => (values) => ({
+			sql: SQL.insert(table, subset.filter(isString)),
+			values,
+		}),
+		insertFromObj: (obj) => {
+			const subset = Object.keys(obj)
+			const values = Object.values(obj)
+
+			return {
+				sql: SQL.insert(table, subset),
 				values,
-			}),
-			insertFromObj: (obj) => {
-				const subset = Object.keys(obj);
-				const values = Object.values(obj);
+			}
+		},
+		update: (subset, where) => (subsetValues, whereValues) => ({
+			sql: SQL.update(table, subset.filter(isString), where.filter(isString)),
+			values: [...subsetValues, ...whereValues],
+		}),
+		selectAll: (subset) => {
+			const sql = subset === "*" ? SQL.selectAll(table, subset) : SQL.selectAll(table, subset.filter(isString))
 
-				return {
-					sql: SQL.insert(table, subset),
-					values,
-				};
-			},
-			update: (subset, where) => (subsetValues, whereValues) => ({
-				sql: SQL.update(table, subset.filter(isString), where.filter(isString)),
-				values: [...subsetValues, ...whereValues],
-			}),
-			selectAll: (subset) => {
-				const sql = subset === '*'
-					? SQL.selectAll(table, subset)
-					: SQL.selectAll(table, subset.filter(isString));
+			return {
+				sql,
+			}
+		},
+		select: (subset, where) => (values: any[]) => {
+			const whereSubstitutions = new Map<number, IWhereConditionColumned>()
+			const whereStringValued = where.filter(isString)
 
-				return {
-					sql,
+			const finalValues = values.filter((value, idx) => {
+				if (isWhereCondition(value)) {
+					const whereCond = value
+
+					whereSubstitutions.set(idx, {
+						...whereCond,
+						column: whereStringValued[idx],
+						toString: () => `${whereStringValued[idx]} ${whereCond.sql}`,
+					})
+
+					return false
 				}
-			},
-			select: (subset, where) => (values: any[]) => {
-				const whereSubstitutions = new Map<number, IWhereConditionColumned>()
-				const whereStringValued = where.filter(isString)
 
-				const finalValues = values.filter((value, idx) => {
-					if (isWhereCondition(value)) {
-						const whereCond = value
+				return true
+			})
 
-						whereSubstitutions.set(idx, {
-							...whereCond,
-							column: whereStringValued[idx],
-							toString: () => `${whereStringValued[idx]} ${whereCond.sql}`,
-						})
+			const finalWhere = whereStringValued.map((where, idx) => {
+				if (whereSubstitutions.has(idx)) {
+					return whereSubstitutions.get(idx)!
+				}
 
-						return false
-					}
+				return where
+			})
 
-					return true
-				})
-
-				const finalWhere = whereStringValued.map((where, idx) => {
-					if (whereSubstitutions.has(idx)) {
-						return whereSubstitutions.get(idx)!
-					}
-
-					return where
-				})
-
-				const sql = subset === '*'
+			const sql =
+				subset === "*"
 					? SQL.select(table, subset, finalWhere)
 					: SQL.select(table, subset.filter(isString), finalWhere)
 
-				return {
-					sql,
-					values: finalValues,
-				}
-			},
-			drop: () => ({
-				sql: SQL.dropTable(table),
-			}),
-			delete: (where) => {
-				const sql = SQL.deleteEntry(table, where.filter(isString))
+			return {
+				sql,
+				values: finalValues,
+			}
+		},
+		drop: () => ({
+			sql: SQL.dropTable(table),
+		}),
+		delete: (where) => {
+			const sql = SQL.deleteEntry(table, where.filter(isString))
 
-				return (values) => ({
-					sql,
-					values,
-				})
-			},
-			addColumns: (columns) => ({
-				sql: SQL.addColumns(table, columns),
-			}),
-			dropColumns: (columnsToRemove) => {
-				const columnNames = columnsToRemove.filter(isString)
-				const columndObject: Columns = columnNames.reduce((obj, columnName) => {
-					const columnDefinition = columns[columnName]
+			return (values) => ({
+				sql,
+				values,
+			})
+		},
+		addColumns: (columns) => ({
+			sql: SQL.addColumns(table, columns),
+		}),
+		dropColumns: (columnsToRemove) => {
+			const columnNames = columnsToRemove.filter(isString)
+			const columndObject: Columns = columnNames.reduce((obj, columnName) => {
+				const columnDefinition = columns[columnName]
 
-					return { ...obj, [columnName]: columnDefinition }
-				}, {})
+				return { ...obj, [columnName]: columnDefinition }
+			}, {})
 
-				return {
-					sql: SQL.dropColumns(table, columndObject),
-				}
-			},
-		}
+			return {
+				sql: SQL.dropColumns(table, columndObject),
+			}
+		},
 	}
+}

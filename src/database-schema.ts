@@ -2,6 +2,8 @@ import { IDatabaseClient, IDatabaseBaseClient } from "./database-client"
 import { TableSchema, ColumnType, NativeFunction, Table, IQuery, Columns } from "./table"
 import { SQL } from "./sql"
 import max from "lodash.max"
+import { bulkPreparedStatements } from "./bulk-prepared-statements"
+import { IView } from "./view"
 
 const schema_management = TableSchema({
 	name: {
@@ -34,9 +36,13 @@ export interface IUpDownArgs {
 
 export interface IMigration {
 	up: (args: IUpDownArgs) => Promise<void | IQuery<{}>[]>
+	views: IView<any>[]
 }
 
-export const Migration = (up: (args: IUpDownArgs) => Promise<void | IQuery<{}>[]>): IMigration => ({ up })
+export const Migration = (
+	up: (args: IUpDownArgs) => Promise<void | IQuery<{}>[]>,
+	views: IView<any>[] = [],
+): IMigration => ({ up, views })
 
 export type CreateStatement = string
 
@@ -44,13 +50,23 @@ export interface IDatabaseSchemaArgs {
 	name: string
 	client: IDatabaseClient
 	createStatements: CreateStatement[]
+	views: IView<any>[]
 	migrations: Map<number, IMigration>
 	logMigrations?: boolean
 }
 
-export const DatabaseSchema = ({ client, createStatements, name, migrations, logMigrations }: IDatabaseSchemaArgs) => {
+export const DatabaseSchema = ({
+	client,
+	createStatements,
+	views,
+	name,
+	migrations,
+	logMigrations,
+}: IDatabaseSchemaArgs) => {
 	let version = 0
 	let isInitialized = false
+
+	const initialCreateViewsStatements = views.map((view) => view.create())
 
 	const getLatestMigrationVersion = () => {
 		return max(Array.from(migrations.keys())) || 1
@@ -74,6 +90,7 @@ export const DatabaseSchema = ({ client, createStatements, name, migrations, log
 						sql: createStatements.join("\n"),
 					})
 					await transaction.query(insertSchemaQuery(name, initialVersion))
+					await transaction.query({ sql: bulkPreparedStatements(initialCreateViewsStatements) })
 
 					version = initialVersion
 				} else {
@@ -155,12 +172,22 @@ export const DatabaseSchema = ({ client, createStatements, name, migrations, log
 				}
 
 				const migration = migrations.get(newVersion)
+				const prevMigration = migrations.get(newVersion - 1)
 
 				if (!migration) {
-					await transaction.query(setSchemaLockQuery(false))
-
 					throw new Error(`Migration with version ${newVersion} not found. Aborting migration process...`)
 				}
+
+				if (newVersion > 2 && !prevMigration) {
+					throw new Error(`Migration with version ${newVersion - 1} not found. Aborting migration process...`)
+				}
+
+				const currentViews = migration.views
+				const prevViews = prevMigration?.views || []
+				const dropPrevViewsStatements = prevViews.map((view) => view.drop())
+				const createCurrentViewsStatements = currentViews.map((view) => view.create())
+
+				await transaction.query({ sql: bulkPreparedStatements(dropPrevViewsStatements) })
 
 				const migrationQueries = await migration.up({ transaction, database: client })
 
@@ -172,6 +199,8 @@ export const DatabaseSchema = ({ client, createStatements, name, migrations, log
 
 				await transaction.query(updateSchemaVersionQuery(name, newVersion))
 				await transaction.query(setSchemaLockQuery(false))
+
+				await transaction.query({ sql: bulkPreparedStatements(createCurrentViewsStatements) })
 
 				// istanbul ignore next
 				if (!(logMigrations === false)) {

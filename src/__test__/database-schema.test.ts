@@ -21,6 +21,7 @@ const setupTest = async ({ createSchema }: { createSchema?: boolean } = {}) => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations: new Map<number, IMigration>(),
+			views: [],
 		})
 		await databaseSchema.init()
 	}
@@ -37,6 +38,7 @@ describe("init", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations: new Map<number, IMigration>(),
+			views: [],
 		})
 
 		await databaseSchema.init()
@@ -53,6 +55,7 @@ describe("init", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations: new Map<number, IMigration>(),
+			views: [],
 		}
 		const databaseSchema = DatabaseSchema(databaseSchemaConfig)
 		await databaseSchema.init()
@@ -72,6 +75,7 @@ describe("init", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations: new Map<number, IMigration>(),
+			views: [],
 		})
 
 		await databaseSchema.init()
@@ -152,6 +156,7 @@ describe("migrate latest", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations,
+			views: [],
 		})
 
 		await databaseSchema.init()
@@ -179,6 +184,7 @@ describe("migrate latest", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations: new Map<number, IMigration>(),
+			views: [],
 		})
 
 		await expect(databaseSchema.migrateLatest()).rejects.toThrowError(
@@ -203,6 +209,7 @@ describe("migrate latest", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations,
+			views: [],
 		})
 
 		await databaseSchema.init()
@@ -231,6 +238,7 @@ describe("migrate latest", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations,
+			views: [],
 		})
 
 		await databaseSchema.init()
@@ -263,6 +271,7 @@ describe("migrate to version", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations,
+			views: [],
 		})
 
 		await databaseSchema.init()
@@ -294,6 +303,7 @@ describe("migrate to version", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations,
+			views: [],
 		})
 
 		await databaseSchema.init()
@@ -336,6 +346,7 @@ describe("migrate to version", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations,
+			views: [],
 		})
 
 		await databaseSchema.init()
@@ -358,6 +369,7 @@ describe("migrate to version", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations,
+			views: [],
 		})
 
 		await databaseSchema.init()
@@ -398,6 +410,7 @@ describe("multi-node environment", () => {
 				client: database,
 				createStatements: composeCreateTableStatements(TestTables),
 				migrations,
+				views: [],
 			})
 
 			await databaseSchema.init()
@@ -443,6 +456,7 @@ describe("read access during migration", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations,
+			views: [],
 		})
 
 		await databaseSchema.init()
@@ -480,6 +494,7 @@ describe("read access during migration", () => {
 			client: database,
 			createStatements: composeCreateTableStatements(TestTables),
 			migrations,
+			views: [],
 		})
 
 		await databaseSchema.init()
